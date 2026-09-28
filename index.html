@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitNutrition Pro - แพลตฟอร์มสุขภาพและโภชนาการไทย</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js สำหรับทำกราฟน้ำหนัก -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Header & Navigation Tabs -->
+    <header class="bg-emerald-600 text-white py-6 shadow-md">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-3xl font-bold">💪 FitNutrition Pro</h1>
+            <p class="text-emerald-100 mt-1">ระบบคำนวณพลังงาน ค้นหาเมนู อาหาร, น้ำ และของหวาน</p>
+            
+            <!-- Tab Navigation -->
+            <div class="flex justify-center flex-wrap gap-2 mt-6">
+                <button onclick="switchTab('calculator')" id="tab-calculator" class="px-5 py-2 rounded-lg font-medium bg-white text-emerald-700 shadow-sm transition cursor-pointer">🧮 คำนวณ TDEE</button>
+                <button onclick="switchTab('food')" id="tab-food" class="px-5 py-2 rounded-lg font-medium bg-emerald-700 text-emerald-100 hover:bg-emerald-500 transition cursor-pointer">🔍 ค้นหาเมนู (อาหาร/น้ำ/ขนมไทย)</button>
+                <button onclick="switchTab('tracker')" id="tab-tracker" class="px-5 py-2 rounded-lg font-medium bg-emerald-700 text-emerald-100 hover:bg-emerald-500 transition cursor-pointer">📈 บันทึกประวัติ</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="container mx-auto px-4 py-8 max-w-4xl flex-grow">
+
+        <!-- SECTION 1: Calculator -->
+        <section id="section-calculator" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-xl font-semibold mb-4 text-emerald-700">📋 ข้อมูลส่วนตัว</h2>
+                <form id="fitnessForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">เพศ</label>
+                        <select id="gender" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="male">ชาย</option>
+                            <option value="female">หญิง</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">อายุ (ปี)</label>
+                            <input type="number" id="age" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="25">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">น้ำหนัก (kg)</label>
+                            <input type="number" step="0.1" id="weight" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="65">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">ส่วนสูง (cm)</label>
+                        <input type="number" id="height" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="170">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">ระดับกิจกรรม</label>
+                        <select id="activity" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="1.2">น้อยมาก (นั่งทำงานโต๊ะ)</option>
+                            <option value="1.375">เล็กน้อย (ออกกำลัง 1-3 วัน/สัปดาห์)</option>
+                            <option value="1.55" selected>ปานกลาง (ออกกำลัง 3-5 วัน/สัปดาห์)</option>
+                            <option value="1.725">หนัก (ออกกำลัง 6-7 วัน/สัปดาห์)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">เป้าหมาย</label>
+                        <select id="goal" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <option value="maintain">รักษาน้ำหนัก</option>
+                            <option value="lose">ลดน้ำหนัก / ลดไขมัน</option>
+                            <option value="gain">เพิ่มกล้ามเนื้อ</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition shadow-md cursor-pointer">คำนวณผลลัพธ์ 🚀</button>
+                </form>
+            </div>
+
+            <div class="space-y-6">
+                <div id="resultCard" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hidden">
+                    <h2 class="text-xl font-semibold mb-4 text-emerald-700">📊 ผลลัพธ์ของคุณ</h2>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between p-3 bg-slate-50 rounded-lg">
+                            <span class="text-slate-600">BMR:</span>
+                            <span class="font-bold text-slate-800"><span id="bmrVal">0</span> kcal</span>
+                        </div>
+                        <div class="flex justify-between p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                            <span class="text-emerald-800 font-medium">TDEE (พลังงานต่อวัน):</span>
+                            <span class="font-bold text-emerald-700"><span id="tdeeVal">0</span> kcal</span>
+                        </div>
+                    </div>
+                    <h3 class="font-semibold text-slate-700 mb-2">🥗 สัดส่วน Macros</h3>
+                    <div class="grid grid-cols-3 gap-2 text-center mb-6">
+                        <div class="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                            <div class="text-xs text-blue-600 font-medium">โปรตีน</div>
+                            <div class="font-bold text-blue-700 text-lg" id="proteinVal">0g</div>
+                        </div>
+                        <div class="bg-amber-50 p-3 rounded-lg border border-amber-100">
+                            <div class="text-xs text-amber-600 font-medium">คาร์บ</div>
+                            <div class="font-bold text-amber-700 text-lg" id="carbVal">0g</div>
+                        </div>
+                        <div class="bg-rose-50 p-3 rounded-lg border border-rose-100">
+                            <div class="text-xs text-rose-600 font-medium">ไขมัน</div>
+                            <div class="font-bold text-rose-700 text-lg" id="fatVal">0g</div>
+                        </div>
+                    </div>
+                    <div id="adviceText" class="text-sm text-slate-600 bg-slate-50 p-4 rounded-lg leading-relaxed border"></div>
+                </div>
+                <div id="placeholderCard" class="bg-white p-12 rounded-2xl shadow-sm border border-slate-200 text-center text-slate-400">
+                    <p class="text-4xl mb-2">👈</p>
+                    <p>กรอกข้อมูลด้านซ้ายแล้วกดปุ่มคำนวณ</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Food & Drink & Dessert Database Search -->
+        <section id="section-food" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-xl font-semibold mb-2 text-emerald-700">🔍 ค้นหาเมนูอาหาร, น้ำหวาน, ของหวาน</h2>
+            <p class="text-sm text-slate-500 mb-6">พิมพ์ค้นหาเมนูโปรด เช่น , ชาไทย, ลาเต้, บัวลอย, ครองแครง, ข้าวเหนียวเปียกลำไย หรือกะเพรา</p>
+            <div class="mb-6">
+                <input type="text" id="foodSearchInput" onkeyup="searchFood()" placeholder="พิมพ์ค้นหาชื่อเมนู..." class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-lg">
+            </div>
+            <div id="foodResultList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- รายการอาหารแสดงที่นี่ -->
+            </div>
+        </section>
+
+        <!-- SECTION 3: Tracker & Graph (LocalStorage) -->
+        <section id="section-tracker" class="hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-xl font-semibold mb-4 text-emerald-700">📈 บันทึกน้ำหนักและแคลอรีประจำวัน</h2>
+                <form id="logForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">วันที่</label>
+                        <input type="date" id="logDate" required class="w-full p-2.5 border rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">น้ำหนัก (kg)</label>
+                        <input type="number" step="0.1" id="logWeight" required placeholder="65.0" class="w-full p-2.5 border rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">แคลอรีที่รับประทาน (kcal)</label>
+                        <input type="number" id="logCalories" required placeholder="2000" class="w-full p-2.5 border rounded-lg outline-none">
+                    </div>
+                    <div class="md:col-span-3">
+                        <button type="submit" class="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition shadow-md cursor-pointer">บันทึกข้อมูล 💾</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Chart Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h3 class="text-lg font-semibold mb-4 text-slate-700">📉 กราฟแสดงความเปลี่ยนแปลงน้ำหนัก</h3>
+                <div class="relative h-64">
+                    <canvas id="weightChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t py-4 text-center text-sm text-slate-500">
+        <p>FitNutrition Pro Project • พัฒนาเพื่อการดูแลสุขภาพอย่างมีความสุข</p>
+    </footer>
+
+    <!-- JavaScript ลอจิกทั้งหมด -->
+    <script>
+        // --- 1. ระบบ Tabs Switching ---
+        function switchTab(tabName) {
+            document.getElementById('section-calculator').classList.add('hidden');
+            document.getElementById('section-food').classList.add('hidden');
+            document.getElementById('section-tracker').classList.add('hidden');
+
+            document.getElementById('tab-calculator').className = "px-5 py-2 rounded-lg font-medium bg-emerald-700 text-emerald-100 hover:bg-emerald-500 transition cursor-pointer";
+            document.getElementById('tab-food').className = "px-5 py-2 rounded-lg font-medium bg-emerald-700 text-emerald-100 hover:bg-emerald-500 transition cursor-pointer";
+            document.getElementById('tab-tracker').className = "px-5 py-2 rounded-lg font-medium bg-emerald-700 text-emerald-100 hover:bg-emerald-500 transition cursor-pointer";
+
+            document.getElementById('section-' + tabName).classList.remove('hidden');
+            document.getElementById('tab-' + tabName).className = "px-5 py-2 rounded-lg font-medium bg-white text-emerald-700 shadow-sm transition cursor-pointer";
+
+            if (tabName === 'tracker') {
+                renderChart();
+            }
+        }
+
+        // --- 2. ระบบคำนวณ TDEE ---
+        document.getElementById('fitnessForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const gender = document.getElementById('gender').value;
+            const age = parseFloat(document.getElementById('age').value);
+            const weight = parseFloat(document.getElementById('weight').value);
+            const height = parseFloat(document.getElementById('height').value);
+            const activity = parseFloat(document.getElementById('activity').value);
+            const goal = document.getElementById('goal').value;
+
+            let bmr = (10 * weight) + (6.25 * height) - (5 * age);
+            bmr = gender === 'male' ? bmr + 5 : bmr - 161;
+            let tdee = bmr * activity;
+            let targetCalories = tdee;
+            let proteinPerKg = 1.6;
+            let advice = "";
+
+            if (goal === 'lose') {
+                targetCalories -= 400;
+                proteinPerKg = 2.0;
+                advice = "🔥 <strong>เป้าหมายลดไขมัน:</strong> ควบคุมแคลอรี เน้นโปรตีนสูงเพื่อรักษามวลกล้ามเนื้อ";
+            } else if (goal === 'gain') {
+                targetCalories += 300;
+                proteinPerKg = 2.2;
+                advice = "💪 <strong>เป้าหมายเพิ่มกล้ามเนื้อ:</strong> ทานอาหารให้เกินพลังงานที่ใช้เล็กน้อย พร้อมเวทเทรนนิ่ง";
+            } else {
+                advice = "⚖️ <strong>รักษาน้ำหนัก:</strong> ทานเท่ากับพลังงานที่ใช้ ออกกำลังกายสม่ำเสมอ";
+            }
+
+            const proteinGrams = Math.round(weight * proteinPerKg);
+            const fatGrams = Math.round((targetCalories * 0.25) / 9);
+            const carbGrams = Math.max(0, Math.round((targetCalories - (proteinGrams * 4 + fatGrams * 9)) / 4));
+
+            document.getElementById('bmrVal').innerText = Math.round(bmr);
+            document.getElementById('tdeeVal').innerText = Math.round(targetCalories);
+            document.getElementById('proteinVal').innerText = proteinGrams + 'g';
+            document.getElementById('carbVal').innerText = carbGrams + 'g';
+            document.getElementById('fatVal').innerText = fatGrams + 'g';
+            document.getElementById('adviceText').innerHTML = advice;
+
+            document.getElementById('placeholderCard').classList.add('hidden');
+            document.getElementById('resultCard').classList.remove('hidden');
+        });
+
+        // --- 3. ฐานข้อมูลอาหาร เครื่องดื่ม Amazon และขนมไทยหวานๆ ---
+        const foodDatabase = [
+            // อาหารไทยยอดฮิต
+            { name: "กะเพราหมูสับ/ไก่ ไข่ดาว", calories: 580, protein: 30, carb: 55, fat: 25, category: "อาหารจานเดียว" },
+            { name: "ต้มยำกุ้งน้ำข้น", calories: 280, protein: 22, carb: 12, fat: 16, category: "ต้มยำ" },
+            { name: "ส้มตำปูปลาร้า + ไก่ย่าง + ข้าวเหนียว", calories: 650, protein: 35, carb: 75, fat: 20, category: "อาหารอีสาน" },
+            { name: "ผัดไทยกุ้งสด", calories: 570, protein: 20, carb: 72, fat: 22, category: "เส้น" },
+            { name: "แกงเขียวหวานไก่", calories: 420, protein: 18, carb: 25, fat: 28, category: "แกงกะทิ" },
+            { name: "ข้าวมันไก่ตอน", calories: 600, protein: 25, carb: 70, fat: 20, category: "อาหารจานเดียว" },
+            { name: "หมูกระทะ / ชาบู (ต่อชุดปานกลาง)", calories: 850, protein: 55, carb: 40, fat: 50, category: "ปิ้งย่าง" },
+            { name: "ยำวุ้นเส้นรวมมิตร", calories: 250, protein: 18, carb: 30, fat: 7, category: "ยำ" },
+            { name: "ไข่เจียวหมูสับฟูๆ + ข้าวสวย", calories: 520, protein: 16, carb: 55, fat: 26, category: "อาหารจานเดียว" },
+            { name: "ข้าวขาหมู", calories: 690, protein: 28, carb: 60, fat: 38, category: "อาหารจานเดียว" },
+            { name: "บะหมี่เกี๊ยวหมูแดงแห้ง", calories: 480, protein: 20, carb: 62, fat: 17, category: "เส้น" },
+            { name: "ปลาทับทิมนึ่งมะนาว", calories: 320, protein: 45, carb: 10, fat: 8, category: "ปลา" },
+            { name: "แกงส้มชะอมทอดไข่", calories: 340, protein: 15, carb: 25, fat: 20, category: "แกง" },
+            { name: "หอยทอดกรอบๆ", calories: 710, protein: 16, carb: 75, fat: 39, category: "ของทอด" },
+            { name: "ข้าวเหนียวมะม่วงสุก", calories: 450, protein: 6, carb: 85, fat: 10, category: "ขนมไทย" },
+
+            // เมนูเครื่องดื่ม Café Amazon (อ้างอิงสูตรหวานปกติ)
+            { name: "Café Amazon (กาแฟอเมซอน - เย็น)", calories: 220, protein: 4, carb: 30, fat: 9, category: "Amazon Coffee" },
+            { name: "Black Coffee (แบล็คคอฟฟี่ - เย็น/ไม่หวาน)", calories: 25, protein: 1, carb: 4, fat: 0, category: "Amazon Coffee" },
+            { name: "Latte (ลาเต้ - เย็น)", calories: 200, protein: 6, carb: 22, fat: 9, category: "Amazon Coffee" },
+            { name: "Cappuccino (คาปูชิโน่ - เย็น)", calories: 190, protein: 6, carb: 20, fat: 9, category: "Amazon Coffee" },
+            { name: "Mocha (มอคกาแฟ - เย็น)", calories: 320, protein: 6, carb: 45, fat: 12, category: "Amazon Coffee" },
+            { name: "Espresso (เอสเพรสโซ - เย็น)", calories: 240, protein: 5, carb: 32, fat: 10, category: "Amazon Coffee" },
+            { name: "Caramel Macchiato (คาราเมล มัคคิอาโต - เย็น)", calories: 290, protein: 5, carb: 42, fat: 11, category: "Amazon Coffee" },
+            { name: "Thai Tea (ชาไทยเย็น / ชานม - อเมซอน)", calories: 280, protein: 4, carb: 42, fat: 10, category: "Amazon Tea" },
+            { name: "Green Tea (ชาเขียวเย็น / ชาเขียวนม - อเมซอน)", calories: 290, protein: 4, carb: 44, fat: 10, category: "Amazon Tea" },
+            { name: "Lemon Tea (ชามะนาว - เย็น)", calories: 160, protein: 0, carb: 40, fat: 0, category: "Amazon Tea" },
+            { name: "Cocoa (โกโก้ - เย็น)", calories: 300, protein: 6, carb: 40, fat: 12, category: "Amazon Milk/Cocoa" },
+            { name: "Fresh Milk (นมสด - เย็น)", calories: 210, protein: 8, carb: 18, fat: 11, category: "Amazon Milk/Cocoa" },
+            { name: "Hojicha / Matcha Latte (มัทฉะ/โฮจิฉะ ลาเต้ - เย็น)", calories: 250, protein: 6, carb: 35, fat: 9, category: "Amazon Tea" },
+            { name: "White Choc Macchiato (ไวท์ ช็อกโกแลต มัคคิอาโต)", calories: 310, protein: 5, carb: 45, fat: 12, category: "Amazon Coffee" },
+            { name: "Honey Lemon Soda (น้ำผึ้งมะนาวโซดา)", calories: 180, protein: 0, carb: 45, fat: 0, category: "Amazon Refreshing" },
+
+            // ขนมหวานไทย (บัวลอย ครองแครง ข้าวเหนียวเปียกลำไย ฯลฯ)
+            { name: "บัวลอยเผือกไข่หวาน (กะทิข้นๆ)", calories: 380, protein: 6, carb: 55, fat: 15, category: "ขนมไทยโบราณ" },
+            { name: "ครองแครงกะทิสด (ครองแครงแก้ว)", calories: 320, protein: 3, carb: 52, fat: 12, category: "ขนมไทยโบราณ" },
+            { name: "ข้าวเหนียวเปียกลำไย (ราดกะทิเค็ม)", calories: 310, protein: 3, carb: 65, fat: 5, category: "ขนมไทยโบราณ" },
+            { name: "ทับทิมกรอบกะทิสดใส่น้ำแข็ง", calories: 290, protein: 2, carb: 58, fat: 7, category: "ขนมไทยโบราณ" },
+            { name: "รวมมิตรน้ำกะทิไทย", calories: 350, protein: 4, carb: 60, fat: 11, category: "ขนมไทยโบราณ" },
+            { name: "กล้วยบวชชี", calories: 260, protein: 2, carb: 45, fat: 8, category: "ขนมไทยโบราณ" },
+            { name: "ลอดช่องสิงคโปร์ / ลอดช่องวัดเจษฯ", calories: 310, protein: 2, carb: 55, fat: 9, category: "ขนมไทยโบราณ" },
+            { name: "สาคูเปียกข้าวโพดมะพร้าวอ่อน", calories: 270, protein: 2, carb: 54, fat: 5, category: "ขนมไทยโบราณ" },
+            { name: "เปียกปูนกะทิสด", calories: 240, protein: 2, carb: 48, fat: 5, category: "ขนมไทยโบราณ" }
+        ];
+
+        function displayFoodList(foods) {
+            const listContainer = document.getElementById('foodResultList');
+            listContainer.innerHTML = '';
+            if (foods.length === 0) {
+                listContainer.innerHTML = '<p class="text-slate-400 col-span-2 text-center py-4">ไม่พบเมนูที่คุณค้นหา</p>';
+                return;
+            }
+            foods.forEach(food => {
+                listContainer.innerHTML += `
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex justify-between items-center hover:shadow-sm transition">
+                        <div>
+                            <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">${food.category}</span>
+                            <h4 class="font-bold text-emerald-800 text-base mt-1">${food.name}</h4>
+                            <p class="text-xs text-slate-500 mt-1">โปรตีน: ${food.protein}g | คาร์บ: ${food.carb}g | ไขมัน: ${food.fat}g</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xl font-bold text-emerald-600">${food.calories}</span>
+                            <span class="text-xs text-slate-500 block">kcal</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        displayFoodList(foodDatabase);
+
+        function searchFood() {
+            const keyword = document.getElementById('foodSearchInput').value.toLowerCase();
+            const filtered = foodDatabase.filter(f => 
+                f.name.toLowerCase().includes(keyword) || f.category.toLowerCase().includes(keyword)
+            );
+            displayFoodList(filtered);
+        }
+
+        // --- 4. ระบบบันทึกประวัติด้วย LocalStorage & กราฟ ---
+        let weightChartInstance = null;
+
+        document.getElementById('logForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const date = document.getElementById('logDate').value;
+            const weight = parseFloat(document.getElementById('logWeight').value);
+            const calories = parseInt(document.getElementById('logCalories').value);
+
+            let logs = JSON.parse(localStorage.getItem('fitness_logs')) || [];
+            logs.push({ date, weight, calories });
+            
+            logs.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            localStorage.setItem('fitness_logs', JSON.stringify(logs));
+            alert('บันทึกข้อมูลสำเร็จ! 💾');
+            document.getElementById('logForm').reset();
+            renderChart();
+        });
+
+        function renderChart() {
+            const logs = JSON.parse(localStorage.getItem('fitness_logs')) || [];
+            const ctx = document.getElementById('weightChart').getContext('2d');
+            
+            const labels = logs.map(l => l.date);
+            const weights = logs.map(l => l.weight);
+
+            if (weightChartInstance) {
+                weightChartInstance.destroy();
+            }
+
+            weightChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.length ? labels : ['ยังไม่มีข้อมูล'],
+                    datasets: [{
+                        label: 'น้ำหนัก (kg)',
+                        data: weights.length ? weights : [0],
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+    </script>
+</body>
+</html>
